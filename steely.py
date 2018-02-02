@@ -2,13 +2,15 @@ from PIL import Image
 
 STEELY = "skull_template.png"
 
+__RATIO__ = .7
 
-def main(image_path):
+
+def main(image_path, ratio):
     background = Image.open(image_path)
     foreground = Image.open(STEELY)
 
     fg_w, fg_h = foreground.size
-    background = background.resize(tuple(map(lambda x: int(x * .7), foreground.size)), Image.ANTIALIAS)
+    background = background.resize(tuple(map(lambda x: int(x * ratio), foreground.size)), Image.ANTIALIAS)
     bg_w, bg_h = background.size
 
     target = Image.new('RGB', foreground.size, 'white')
@@ -31,6 +33,13 @@ if __name__ == '__main__':
         'image_file',
         type=str
     )
+    parser.add_argument(
+        '-r',
+        '--ratio',
+        type=float,
+        help="Size ratio for image provided. Default is .7",
+        default=.7
+    )
     args = parser.parse_args()
 
-    main(args.image_file)
+    main(args.image_file, args.ratio)
