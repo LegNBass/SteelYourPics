@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Steely Generator</title>
+</head>
+<body>
+    <div id="foo">Hello World!</div>
+</body>
+</html>
+<script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
+<script type="text/javascript">
+    $(function() {
+        blink();
+    });
+    // sleep time expects milliseconds
+    function sleep (time) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
+    async function blink() {
+        let on = 1;
+        let foo = $("#foo");
+        while (true) {
+            await sleep(200);
+            if (on) {
+                foo.hide();
+            } else {
+                foo.show();
+            }
+            on ^= 1;
+        }
+    }
+</script>
