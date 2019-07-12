@@ -7,40 +7,60 @@
 <style type="text/css">
     body {
         background-color: salmon;
+        padding: 10px;
     }
-    canvas {
+    #sandbox {
+        background-color: white;
         position: relative;
-        width: 100%;
-        height: auto;
+        border: 1px solid red;
+        width: 960px;
+        height: 960px;
     }
 </style>
 <body>
-    <div id="foo">Hello World!</div>
-    <div><canvas id="sandbox">
-
-    </canvas></div>
+    <canvas id="sandbox"></canvas>
+    <br />
+    <input id="fileLoad" type="file" onchange="load_image(this)"/>
 </body>
 </html>
 <script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
 <script type="text/javascript">
     $(function() {
-        blink();
+        let sandbox = document.getElementById('sandbox');
+        let ctx = sandbox.getContext('2d');
+        let offset = $('#sandbox').offset();
+        let oX = offset.left;
+        let oY = offset.top;
+
+        let theta = Math.PI * 2;
+        let anchorRad = 8;
+        let dragger = {x:0,y:0};
+
+
+        let img = new Image();
+        img.onload = function () {
+            sandbox.width = img.width;
+            sandbox.height = img.height;
+            ctx.clearRect(0, 0, sandbox.width, sandbox.height);
+            draw(img, ctx, false, false);
+        };
+        img.src = "{{ url_for('static', filename='skull_template.png') }}"
+
     });
-    // sleep time expects milliseconds
-    function sleep (time) {
-        return new Promise((resolve) => setTimeout(resolve, time));
+    function draw(img, ctx, anchors=true, borders=false) {
+        // Erase the sandbox
+        ctx.drawImage(img, 0, 0);
     }
-    async function blink() {
-        let on = 1;
-        let foo = $("#foo");
-        while (true) {
-            await sleep(200);
-            if (on) {
-                foo.hide();
-            } else {
-                foo.show();
-            }
-            on ^= 1;
+    function load_image(upload) {
+        canv = document.getElementById('sandbox');
+        ctx = canv.getContext('2d');
+
+        reader = new FileReader();
+        reader.onload = function(event) {
+            img = new Image();
+            img.onload = () => draw(img, ctx);
+            img.src = event.target.result;
         }
+        reader.readAsDataURL(upload.files[0]);
     }
 </script>

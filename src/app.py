@@ -9,7 +9,9 @@ app = Flask(__name__)
 def main():
     import os
     os.system('pwd && ls')
-    return render_template('index.html')
+    return render_template(
+        'index.html'
+    )
 
 
 if __name__ == '__main__':
