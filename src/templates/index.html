@@ -25,42 +25,97 @@
 </html>
 <script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
 <script type="text/javascript">
-    $(function() {
-        let sandbox = document.getElementById('sandbox');
-        let ctx = sandbox.getContext('2d');
-        let offset = $('#sandbox').offset();
-        let oX = offset.left;
-        let oY = offset.top;
+    let sandbox = document.getElementById('sandbox');
+    let ctx = sandbox.getContext('2d');
+    let offset = $('#sandbox').offset();
+    let oX = offset.left;
+    let oY = offset.top;
 
-        let theta = Math.PI * 2;
-        let anchorRad = 8;
-        let dragger = {x:0,y:0};
+    let theta = Math.PI * 2;
+    let anchorRad = 10;
+    let dragger = {x:0,y:0};
 
+    let bgImg;
+    let bgW, bgH, bgX, bgY;
 
-        let img = new Image();
-        img.onload = function () {
-            sandbox.width = img.width;
-            sandbox.height = img.height;
-            ctx.clearRect(0, 0, sandbox.width, sandbox.height);
-            draw(img, ctx, false, false);
-        };
-        img.src = "{{ url_for('static', filename='skull_template.png') }}"
+    let fgImg = new Image();
+    fgImg.onload = function () {
+        sandbox.width = fgImg.width;
+        sandbox.height = fgImg.height;
+        draw_foreground();
+    };
+    fgImg.src = "{{ url_for('static', filename='skull_template.png') }}";
 
-    });
-    function draw(img, ctx, anchors=true, borders=false) {
-        // Erase the sandbox
-        ctx.drawImage(img, 0, 0);
+    // Function Definitions
+    function draw_foreground() {
+        ctx.drawImage(
+            fgImg, 0, 0, // Image, start x&y
+        );
+
+    }
+    function drawBg(anchors=true, borders=false) {
+        ctx.drawImage(
+            bgImg, 0, 0, // Image, start x&y
+            bgImg.width, bgImg.height, // Source image w&h
+            bgX, bgY, // dest x&y
+            bgW, bgH // dest width&height
+        );
+        if (anchors) {
+            drawAnchor(bgX, bgY);
+            drawAnchor(bgW + bgX, bgY);
+            drawAnchor(bgX, bgH + bgY);
+            drawAnchor(bgW + bgX, bgH + bgY);
+        }
     }
     function load_image(upload) {
-        canv = document.getElementById('sandbox');
-        ctx = canv.getContext('2d');
-
         reader = new FileReader();
         reader.onload = function(event) {
             img = new Image();
-            img.onload = () => draw(img, ctx);
+            img.onload = function() {
+                bgW = img.width;
+                bgH = img.height;
+                bgX = 0;
+                bgY = 0;
+                drawBg();
+            };
             img.src = event.target.result;
-        }
+
+            // Modify Globals
+            bgImg = img;
+            $('#sandbox').mousedown((e) => handleMouseDown(e));
+        };
         reader.readAsDataURL(upload.files[0]);
     }
+    function drawAnchor(x, y){
+        ctx.beginPath();
+        ctx.arc(x,y, anchorRad, 0, theta, false);
+        ctx.closePath();
+        ctx.fill();
+    }
+    function anchorHit(x, y) {
+        var dx, dy;
+
+        dx = x - bgX;
+        dy = y - bgY;
+        if(dx**2 + dy**2 <= anchorRad**2) {
+            return 0;
+        }
+        return -1;
+    }
+    function bgHit(x, y) {
+        return (x > bgX && x < bgX+bgW && y > bgY && y < bgY+bgH);
+    }
+    function handleMouseDown(e) {
+        let x = parseInt(e.clientX - oX);
+        let y = parseInt(e.clientY - oY);
+        let draggingAnchor = anchorHit(x, y);
+        let draggingImage = bgHit(x, y);
+        console.log(draggingAnchor);
+        console.log(draggingImage);
+    }
+    // Document Onready
+    $(function() {
+        ctx.clearRect(0, 0, sandbox.width, sandbox.height);
+        draw_foreground(sandbox, ctx);
+    });
 </script>
