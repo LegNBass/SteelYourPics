@@ -5,11 +5,31 @@
     <title>Steely Generator</title>
 </head>
 <style type="text/css">
+    /* unvisited link */
+    a:link {
+        color: blue;
+    }
+
+    /* visited link */
+    a:visited {
+        color: purple;
+    }
+
+    /* mouse over link */
+    a:hover {
+        color: red;
+    }
+
+    /* selected link */
+    a:active {
+        color: purple;
+    }
     body {
         background-color: salmon;
         padding: 10px;
     }
     #sandbox {
+        display: block;
         background-color: white;
         position: relative;
         border: 1px solid red;
@@ -18,9 +38,13 @@
     }
 </style>
 <body>
-    <canvas id="sandbox"></canvas>
-    <br />
-    <input id="fileLoad" type="file" onchange="loadImage(this)"/>
+    <p align="center">
+        <canvas id="sandbox"></canvas>
+    </p>
+    <div align="center">
+        <input id="fileLoad" type="file" onchange="loadImage(this)"/>
+        <a id="dl" href="" download="Steely.png" onclick="saveImage(this)">Save</a>
+    </div>
 </body>
 </html>
 <script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
@@ -31,7 +55,7 @@
     let oX = offset.left;
     let oY = offset.top;
     let startX, startY;
-    let bgSelected = false;
+    let bgSelected = true;
 
     let theta = Math.PI * 2;
     let anchorRad = 10;
@@ -55,6 +79,7 @@
             fgImg, 0, 0, // Image, start x&y
         );
         if (bgSelected) {
+            ctx.fillStyle = "#000000";
             drawAnchor(bgX, bgY);
             drawAnchor(bgW + bgX, bgY);
             drawAnchor(bgX, bgH + bgY);
@@ -63,6 +88,8 @@
     }
     function drawBg() {
         ctx.clearRect(0, 0, sandbox.width, sandbox.height);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, sandbox.width, sandbox.height);
         ctx.drawImage(
             bgImg, 0, 0, // Image, start x&y
             bgImg.width, bgImg.height, // Source image w&h
@@ -210,6 +237,13 @@
             drawBg();
             drawFg();
         }
+    }
+    function saveImage(link) {
+        bgSelected = false;
+        drawBg();
+        drawFg();
+        var image = sandbox.toDataURL("image/png").replace("image/png", "image/octet-stream");
+        link.href = image;
     }
     // Document Onready
     $(function() {
