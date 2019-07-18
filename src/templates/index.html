@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Steely Generator</title>
+</head>
+<style type="text/css">
+    /* unvisited link */
+    a:link {
+        color: blue;
+    }
+
+    /* visited link */
+    a:visited {
+        color: purple;
+    }
+
+    /* mouse over link */
+    a:hover {
+        color: red;
+    }
+
+    /* selected link */
+    a:active {
+        color: purple;
+    }
+    body {
+        background-color: salmon;
+        padding: 10px;
+    }
+    #sandbox {
+        display: block;
+        background-color: white;
+        position: relative;
+        border: 1px solid red;
+        width: 960px;
+        height: 960px;
+    }
+</style>
+<body>
+    <p align="center">
+        <canvas id="sandbox"></canvas>
+    </p>
+    <div align="center">
+        <input id="fileLoad" type="file" onchange="loadImage(this)"/>
+        <a id="dl" href="" download="Steely.png" onclick="saveImage(this)">Save</a>
+    </div>
+</body>
+</html>
+<script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
+<script type="text/javascript">
+    let sandbox = document.getElementById('sandbox');
+    let ctx = sandbox.getContext('2d');
+    let offset = sandbox.getBoundingClientRect();
+    let oX = offset.left;
+    let oY = offset.top;
+    let startX, startY;
+    let bgSelected = true;
+
+    let theta = Math.PI * 2;
+    let anchorRad = 10;
+    let draggingAnchor = -1;
+    let draggingImage = false;
+
+    let bgImg;
+    let bgW, bgH, bgX, bgY, bgR, bgB;
+
+    let fgImg = new Image();
+    fgImg.onload = function () {
+        sandbox.width = fgImg.width;
+        sandbox.height = fgImg.height;
+        drawFg();
+    };
+    fgImg.src = "{{ url_for('static', filename='skull_template.png') }}";
+
+    // Function Definitions
+    function drawFg() {
+        ctx.drawImage(
+            fgImg, 0, 0, // Image, start x&y
+        );
+        if (bgSelected) {
+            ctx.fillStyle = "#000000";
+            drawAnchor(bgX, bgY);
+            drawAnchor(bgW + bgX, bgY);
+            drawAnchor(bgX, bgH + bgY);
+            drawAnchor(bgW + bgX, bgH + bgY);
+        }
+    }
+    function drawBg() {
+        ctx.clearRect(0, 0, sandbox.width, sandbox.height);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, sandbox.width, sandbox.height);
+        ctx.drawImage(
+            bgImg, 0, 0, // Image, start x&y
+            bgImg.width, bgImg.height, // Source image w&h
+            bgX, bgY, // dest x&y
+            bgW, bgH // dest width&height
+        );
+    }
+    function loadImage(upload) {
+        reader = new FileReader();
+        reader.onload = function(event) {
+            img = new Image();
+            img.onload = function() {
+                bgW = img.width;
+                bgH = img.height;
+                bgX = 0;
+                bgY = 0;
+                bgR = bgX + bgW;
+                bgB = bgY + bgH;
+                drawBg();
+                drawFg();
+            };
+            img.src = event.target.result;
+
+            // Modify Globals
+            bgImg = img;
+            $('#sandbox').mousedown((e) => handleMouseDown(e));
+            $('#sandbox').mouseup((e) => handleMouseUp(e));
+            $('#sandbox').mouseout((e) => handleMouseUp(e));
+            $('#sandbox').mousemove((e) => handleMouseMove(e));
+
+        };
+        reader.readAsDataURL(upload.files[0]);
+    }
+    function drawAnchor(x, y){
+        ctx.beginPath();
+        ctx.arc(x,y, anchorRad, 0, theta, false);
+        ctx.closePath();
+        ctx.fill();
+    }
+    function anchorHit(x, y) {
+        var dx, dy;
+
+        dx = x - bgX;
+        dy = y - bgY;
+        if(dx**2 + dy**2 <= anchorRad**2) {
+            return 0; //Top-Left
+        }
+        dx = x - bgR;
+        dy = y - bgY;
+        if (dx**2 + dy**2 <= anchorRad**2){
+            return 1; //Top-Right
+        }
+        dx = x - bgR;
+        dy = y - bgB;
+        if (dx**2 + dy**2 <= anchorRad**2){
+            return 2; //Bottom-Right
+        }
+        dx = x - bgX;
+        dy = y - bgB;
+        if (dx**2 + dy**2 <= anchorRad**2){
+            return 3; //Bottom-Left
+        }
+        return -1;
+    }
+    function bgHit(x, y) {
+        let ret = (x > bgX && x < bgX+bgW && y > bgY && y < bgY+bgH);
+        if (ret) {
+            bgSelected = true;
+        } else {
+            bgSelected = false;
+        }
+        return ret;
+    }
+    function handleMouseDown(e) {
+        offset = sandbox.getBoundingClientRect();
+        let oX = offset.left;
+        let oY = offset.top;
+
+        startX = parseInt(e.clientX - oX);
+        startY = parseInt(e.clientY - oY);
+        draggingAnchor = anchorHit(startX, startY);
+        draggingImage = draggingAnchor < 0 && bgHit(startX, startY);
+        console.log(draggingAnchor);
+        console.log(draggingImage);
+    }
+    function handleMouseUp(e){
+        draggingAnchor = -1;
+        draggingImage = false;
+        drawBg();
+        drawFg()
+    }
+    function handleMouseMove(e){
+        offset = sandbox.getBoundingClientRect();
+        let oX = offset.left;
+        let oY = offset.top;
+
+        let x = parseInt(e.clientX - oX);
+        let y = parseInt(e.clientY - oY);
+
+        if (draggingAnchor > -1) {
+            switch (draggingAnchor) {
+                case 0: // Top-Left
+                    bgX = x;
+                    bgW = bgR - x;
+                    bgY = y;
+                    bgH = bgB - y;
+                    break;
+                case 1: // Top-Right
+                    bgY = y;
+                    bgW = x - bgX;
+                    bgH = bgB - y;
+                    break;
+                case 2: // Bottom-Left
+                    bgW = x - bgX;
+                    bgH = y - bgY;
+                    break;
+                case 3: // Bottom-Right
+                    bgX = x;
+                    bgW = bgR - x;
+                    bgH = y - bgY;
+                    break
+            }
+            if (bgW < 25){
+                bgW = 25;
+            } else {
+                bgR = bgX + bgW;
+            }
+            if (bgH < 25){
+                bgH = 25;
+            } else {
+                bgB = bgY + bgH;
+            }
+            drawBg();
+            drawFg();
+        } else if (draggingImage) {
+            var dx = x - startX;
+            var dy = y - startY;
+            bgX += dx;
+            bgY += dy;
+            bgR += dx;
+            bgB += dy;
+
+            startX = x;
+            startY = y;
+            drawBg();
+            drawFg();
+        }
+    }
+    function saveImage(link) {
+        bgSelected = false;
+        drawBg();
+        drawFg();
+        var image = sandbox.toDataURL("image/png").replace("image/png", "image/octet-stream");
+        link.href = image;
+    }
+    // Document Onready
+    $(function() {
+        ctx.clearRect(0, 0, sandbox.width, sandbox.height);
+        drawFg();
+    });
+</script>

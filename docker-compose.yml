@@ -1,0 +1,11 @@
+version: '0'
+services:
+  steely:
+    container_name: steely
+    build: ./src
+    volumes:
+      - ./src:/src
+    ports:
+      - 80:5000
+    environment:
+      - DEBUG=true
