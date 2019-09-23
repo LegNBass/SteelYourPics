@@ -7,8 +7,6 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def main():
-    import os
-    os.system('pwd && ls')
     return render_template(
         'index.html'
     )
