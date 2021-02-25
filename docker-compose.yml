@@ -1,4 +1,3 @@
-version: '0'
 services:
   steely:
     container_name: steely
