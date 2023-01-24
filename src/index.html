@@ -48,7 +48,7 @@
     </div>
 </body>
 </html>
-<script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="static/jquery-3.4.1.min.js"></script>
 <script type="text/javascript">
     let sandbox = document.getElementById('sandbox');
     let ctx = sandbox.getContext('2d');
@@ -72,7 +72,7 @@
         sandbox.height = fgImg.height;
         drawFg();
     };
-    fgImg.src = "{{ url_for('static', filename='skull_template.png') }}";
+    fgImg.src = "static/skull_template.png";
 
     // Function Definitions
     function drawFg() {
